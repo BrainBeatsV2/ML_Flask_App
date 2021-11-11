@@ -7,7 +7,7 @@ If you don't already have virtualenv, install it:
 pip install virtualenv
 
 Activate the virtual environment: 
-source venv/bin/activate
+source app/venv/bin/activate
 
 cd into venv
 
@@ -15,7 +15,7 @@ cd into venv
 pip install -r requirements.txt
 
 3. Start the app: 
-python app.py
+python3 app.py
 
 
 
