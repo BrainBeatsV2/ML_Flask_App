@@ -17,7 +17,7 @@ CMD ["python3", "app.py"]
 
 
 
-# FROM ubuntu:16.04
+# FROM ubuntu:16.04ls
 # WORKDIR /usr/src/app
 
 # RUN apt update -y

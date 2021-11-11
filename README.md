@@ -6,10 +6,11 @@
 If you don't already have virtualenv, install it:
 pip install virtualenv
 
-Activate the virtual environment: 
-source app/venv/bin/activate
+if there isn't already a folder called venv
+virtualenv venv 
 
-cd into venv
+Activate the virtual environment: 
+source venv/bin/activate
 
 2. Install requirements:
 pip install -r requirements.txt
