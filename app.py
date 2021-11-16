@@ -15,7 +15,7 @@ def predict():
     data = request.form['input']
     print(f"Input data: {data}")
     # 1. Create numpy array, splitting the giant string by the new line character.
-    input_data_numpy_array = np.array(data.split("\n"))
+    input_data_numpy_array = np.array(data.split(" "))
     print(f"Input np array: {input_data_numpy_array}")
 
     # 2. Determine the size of the input array for the ML model
