@@ -15,13 +15,12 @@ def predict():
     data = request.form['input']
     print(f"Input data: {data}")
     # 1. Create numpy array, splitting the giant string by the new line character.
-    input_data_numpy_array = np.array(data.split(" "))
+    input_data_numpy_array = np.array(data.split("_"))
     print(f"Input np array: {input_data_numpy_array}")
 
     # 2. Determine the size of the input array for the ML model
     total_eeg_snapshots = len(input_data_numpy_array)
-    first_snapshot = input_data_numpy_array[0].split(",")
-    total_features = len(first_snapshot)
+    total_features = len(input_data_numpy_array[0].split(","))
 
     # 3. Create the array, build it up with the data!
     array = np.empty([total_eeg_snapshots, total_features])
