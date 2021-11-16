@@ -12,7 +12,7 @@ model = keras.models.load_model("lstm_model_4.h5")
 
 @app.post('/predict')
 def predict():
-    data = request.form['input']
+    data = request.json['input']
     print(f"Input data: {data}")
     # 1. Create numpy array, splitting the giant string by the new line character.
     input_data_numpy_array = np.array(data.split("_"))
