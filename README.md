@@ -18,12 +18,16 @@ pip install -r requirements.txt
 3. Start the app: 
 python3 app.py
 
+4. Build & run via docker:
+docker build -t mlflaskapp .
+docker run -d mlflaskapp --network="host" --name='mlflaskapp'
 
 
-For the docker build: 
+Deployment  not through docker follow the same steps for development 
 
-cd app
+Terminate the process 
+To check if process is running in the background
+ps ax | grep test.py
 
-
-docker build -t name .
-docker run -d name
+To terminate the process
+KILL PID

@@ -13,9 +13,10 @@ model = keras.models.load_model("lstm_model_4.h5")
 @app.post('/predict')
 def predict():
     data = request.form['input']
-
+    print(f"Input data: {data}")
     # 1. Create numpy array, splitting the giant string by the new line character.
     input_data_numpy_array = np.array(data.split("\n"))
+    print(f"Input np array: {input_data_numpy_array}")
 
     # 2. Determine the size of the input array for the ML model
     total_eeg_snapshots = len(input_data_numpy_array)
