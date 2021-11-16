@@ -1,4 +1,4 @@
-from flask import Flask, requests
+from flask import Flask, request
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -12,7 +12,7 @@ model = keras.models.load_model("lstm_model_4.h5")
 
 @app.post('/predict')
 def predict():
-    data = requests.form['input']
+    data = request.form['input']
     print(f"Input data: {data}")
     # 1. Create numpy array, splitting the giant string by the new line character.
     input_data_numpy_array = np.array(data.split("_"))
