@@ -26,7 +26,7 @@ def predict():
     # 3. Create the array, build it up with the data!
     array = np.empty([total_eeg_snapshots, total_features])
     for i in range(total_eeg_snapshots):
-        array[i] = input_data_numpy_array[i].split(",")
+        array[i] = float(input_data_numpy_array[i]).split(",")
         # np.vstack([array, cur_eeg_snapshot_data])
 
     # 4. Predict!
