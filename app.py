@@ -20,7 +20,8 @@ def predict():
 
     # 2. Determine the size of the input array for the ML model
     total_eeg_snapshots = len(input_data_numpy_array)
-    first_eeg_snapshot = np.array(input_data_numpy_array[0].split(","))
+    first_eeg_snapshot = np.fromstring(
+        input_data_numpy_array[0], dtype=float, sep=',')
     print(f"first_eeg_snapshot: {first_eeg_snapshot}")
 
     total_features = len(first_eeg_snapshot)
@@ -28,7 +29,8 @@ def predict():
     # 3. Create the array, build it up with the data!
     array = np.empty([total_eeg_snapshots, total_features])
     for i in range(total_eeg_snapshots):
-        array[i] = float(input_data_numpy_array[i]).split(",")
+        array[i] = np.fromstring(
+            input_data_numpy_array[i], dtype=float, sep=',')
         # np.vstack([array, cur_eeg_snapshot_data])
 
     # 4. Predict!
