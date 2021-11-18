@@ -33,16 +33,16 @@ model = keras.models.load_model("lstm_model_4.h5")
 @app.post('/predict')
 def predict():
     data = request.json['input']
-    print(f'Input data {data}')
+    print(f"Input {data}")
     # 1. Create numpy array, splitting the giant string by the new line character.
     input_data_numpy_array = np.array(data.split("_"))
-    print(f'Input np array {input_data_numpy_array}')
+    print(f"Input np array {input_data_numpy_array}")
 
     # 2. Determine the size of the input array for the ML model
     total_eeg_snapshots = len(input_data_numpy_array)
     first_eeg_snapshot = np.fromstring(
         input_data_numpy_array[0], dtype=float, sep=',')
-    print(f'first_eeg_snapshot {first_eeg_snapshot}')
+    print(f"first_eeg_snapshot {first_eeg_snapshot}")
 
     total_features = len(first_eeg_snapshot)
     numNotesInScaleColIndex = total_features - 2
