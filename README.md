@@ -27,7 +27,7 @@ Deployment  not through docker follow the same steps for development
 
 Terminate the process 
 To check if process is running in the background
-ps ax | grep test.py
+ps ax | grep app.py
 
 To terminate the process
 KILL PID

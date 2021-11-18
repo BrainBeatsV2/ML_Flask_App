@@ -9,32 +9,56 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 app = Flask(__name__)
 model = keras.models.load_model("lstm_model_4.h5")
 
+# def scale_prediction(model_prediction, numNotesInScaleColIndex):
+#   # Inverse transfer predicted data
+#   num_notes_scale_index = train_data.columns.get_loc('NumNotesInScale')
+#   inverse_scaler_dataset = np.zeros(shape=(len(model_prediction), n_features))
+#   inverse_scaler_dataset[:,num_notes_scale_index] = model_prediction[:,0]
+#   scaled_prediction = scaler.inverse_transform(inverse_scaler_dataset)[:,0]
+
+#   # Adjust predicted data to test's scale
+#   test_data_scale_col = test_data[test_data.columns[-2]]
+#   adjusted_prediction = np.zeros(len(scaled_prediction))
+#   for i in range(len(test_data_scale_col)):
+#     scale_size = test_data_scale_col[i]
+#     scaled_adjustment = scaled_prediction[i] * 100
+#     adjusted_prediction[i] =  int(proper_round(scale_size * scaled_adjustment, 0))
+
+#   filename = "prediction_" + name + ".csv"
+#   pd.DataFrame(adjusted_prediction).to_csv(filename, index = None)
+
+#   return adjusted_prediction
+
 
 @app.post('/predict')
 def predict():
     data = request.json['input']
-    print(f"Input data: {data}")
+    print(f'Input data: {data}')
     # 1. Create numpy array, splitting the giant string by the new line character.
     input_data_numpy_array = np.array(data.split("_"))
-    print(f"Input np array: {input_data_numpy_array}")
+    print(f'Input np array: {input_data_numpy_array}')
 
     # 2. Determine the size of the input array for the ML model
     total_eeg_snapshots = len(input_data_numpy_array)
     first_eeg_snapshot = np.fromstring(
         input_data_numpy_array[0], dtype=float, sep=',')
-    print(f"first_eeg_snapshot: {first_eeg_snapshot}")
+    print(f'first_eeg_snapshot: {first_eeg_snapshot}')
 
     total_features = len(first_eeg_snapshot)
+    numNotesInScaleColIndex = total_features - 2
 
     # 3. Create the array, build it up with the data!
     array = np.empty([total_eeg_snapshots, total_features])
+    numNotesInScaleCol = []
     for i in range(total_eeg_snapshots):
         array[i] = np.fromstring(
             input_data_numpy_array[i], dtype=float, sep=',')
+        numNotesInScaleCol.push(array[i][numNotesInScaleColIndex])
         # np.vstack([array, cur_eeg_snapshot_data])
 
     # 4. Predict!
     predictions = model.predict(array)
+    # predictions = scale_prediction(predictions, numNotesInScaleCol)
     output_data = {"output": predictions.tolist()}
 
     print(output_data)
