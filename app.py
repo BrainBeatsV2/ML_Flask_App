@@ -35,7 +35,7 @@ def predict():
     data = request.json['input']
     print(f"Input {data}")
     # 1. Create numpy array, splitting the giant string by the new line character.
-    input_data_numpy_array = np.array(data.split("_"))
+    input_data_numpy_array = np.array(data.split("_,"))
     print(f"Input np array {input_data_numpy_array}")
 
     # 2. Determine the size of the input array for the ML model
@@ -45,15 +45,15 @@ def predict():
     print(f"first_eeg_snapshot {first_eeg_snapshot}")
 
     total_features = len(first_eeg_snapshot)
-    numNotesInScaleColIndex = total_features - 2
+    # numNotesInScaleColIndex = total_features - 2
 
     # 3. Create the array, build it up with the data!
     array = np.empty([total_eeg_snapshots, total_features])
-    numNotesInScaleCol = []
+    # numNotesInScaleCol = []
     for i in range(total_eeg_snapshots):
         array[i] = np.fromstring(
             input_data_numpy_array[i], dtype=float, sep=',')
-        numNotesInScaleCol.push(array[i][numNotesInScaleColIndex])
+        # numNotesInScaleCol.push(array[i][numNotesInScaleColIndex])
         # np.vstack([array, cur_eeg_snapshot_data])
 
     # 4. Predict!
