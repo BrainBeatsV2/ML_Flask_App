@@ -16,7 +16,7 @@ from brainflow.exit_codes import *
 # TODO HANDLE SERIAL PORTS: COM3 VS /DEV/TTY/ VS /DEV/CU
 # https://brainflow.readthedocs.io/en/stable/SupportedBoards.html
 
-BRAINWAVES = ['delta', 'theta', 'alpha', 'beta', 'gamma']
+BRAINWAVES = ['time', 'delta', 'theta', 'alpha', 'beta', 'gamma']
 ROUNDING_DECIMAL_PLACE = 3
 TIMEOUT = 60
 
@@ -24,37 +24,46 @@ TIMEOUT = 60
 def main():
     arguments = parse_script_arguments(sys.argv[1:])
     eeg_num = arguments['eeg']
-    mac = arguments['mac']
+    serial_port = arguments['serial_port']
+    mac_address = arguments['mac_address']
 
-    writer = prepare_csv(arguments['song'], arguments['user'])
-
-    eeg_params = get_eeg_params(eeg_num, mac)
+    # writer = prepare_csv(arguments['song'], arguments['user'])
+    eeg_params = get_eeg_params(eeg_num, serial_port, mac_address)
     board = create_eeg_board_object(eeg_params)
+    print("printing board object in main")
+    print(board)
     stream_eeg_data(board, eeg_params, writer)
 
 
 def parse_script_arguments(args):
     '''Input: system args. Output: Variables as json. Defaults EEG to ganglion unless user specified otherwise.'''
+    print("Parsing Script Arguments")
+
     eeg = 'Ganglion'
+    serial_port = 'COM3' 
+    mac_address = ''
     user = ''
     song = ''
-    mac = ''
 
     for i in range(len(args)):
-        if (args[i] == "-eeg" or args[i] == "--eeg") and i+1 < len(args):
-            eeg = args[i+1]
-        if (args[i] == "-u" or args[i] == "--user") and i+1 < len(args):
-            user = args[i+1]
-        if (args[i] == "-s" or args[i] == "--song") and i+1 < len(args):
-            song = args[i+1]
-        if (args[i] == "-m" or args[i] == "--mac") and i+1 < len(args):
-            mac = args[i+1]
+        if (args[i] == "--eeg-name") and i+1 < len(args):
+            eeg = args[i+1].lower()
+        if (args[i] == "--serial-port") and i+1 < len(args):
+            os = args[i+1]
+        if (args[i] == "--mac-address") and i+1 < len(args):
+            mac = args[i+1].lower()
+        # Used only for creating LSTM data, user data and song data is not stored
+        if (args[i] == "--user") and i+1 < len(args):
+            user = args[i+1].lower()
+        if (args[i] == "--song") and i+1 < len(args):
+            song = args[i+1].lower()
 
-    print_debug(str("userheadset: " + eeg))
-    return {"eeg": eeg, "mac": mac, "user": user, "song": song}
+    print_debug(str("eeg: "+ eeg + ", serial_port: " + serial_port + ", mac_address: " + mac_address + ", user: " + user + ", song: " + song))
+    return {"eeg": eeg, "serial_port": serial_port, "mac_address": mac_address, "user": user, "song": song}
 
 
 def prepare_csv(song, user):
+    print('Preparing CSV')
     filename = get_unique_filename(song, user)
     f = open(filename, 'w')
     writer = csv.writer(f)
@@ -64,9 +73,12 @@ def prepare_csv(song, user):
 
 
 def get_unique_filename(song, user):
+    print('Getting unique filename')
     current_time = datetime.datetime.now()
-    cur_date = current_time.month + current_time.day + current_time.year
-    cur_time = current_time.hour + current_time.minute + current_time.second
+    cur_date = str(current_time.month) + \
+        str(current_time.day) + str(current_time.year)
+    cur_time = str(current_time.hour) + \
+        str(current_time.minute) + str(current_time.second)
     file_extension = ".csv"
     filename = song + "_" + user + "_eeg_" + cur_date + cur_time + file_extension
 
@@ -79,14 +91,14 @@ def get_unique_filename(song, user):
     return filename
 
 
-def get_eeg_params(eeg_name, mac_address):
-    """ Configures EEG Headset board specifications for EEG headsets based off of Brainflow Documentation """
+def get_eeg_params(eeg_name, serial_port, mac_address):
+    print("Configuring EEG Headset board specifications... ")
     # There might be differences for each of the boards, tried the best we could since we only had one type of EEG board!
     # Here's for more info: https://brainflow.readthedocs.io/en/stable/SupportedBoards.html
 
-    # 1. Build the variables
-    board_id = 1  # Default is the Ganglion
-    serial_port = ''
+    # 1. Build the variables 
+    # Serial_port & mac_address are determined when parsing the arguments, serial_port default is COM3 (Windows) and mac_address default is ""
+    board_id = get_eeg_board_id(eeg_name)
     ip_address = ''
     ip_port = 0
     ip_protocol = 0
@@ -94,90 +106,6 @@ def get_eeg_params(eeg_name, mac_address):
     serial_number = ''
     file = ''
     streamer_params = ''
-    # mac_address is default to '' when inputting the EEG data into the terminal :)
-
-    # OpenBCI Devices:
-    if (eeg_name == 'Synthetic'):
-        board_id = -1
-    if (eeg_name == 'Cyton'):
-        board_id = 0
-        serial_port = 'COM3'
-    if (eeg_name == 'Ganglion'):
-        board_id = 1
-        serial_port = getSerialPortBasedOffOfOS()
-    if (eeg_name == 'CytonDaisy'):
-        board_id = 2
-        serial_port = 'COM3'
-    if (eeg_name == 'CytonWIFI'):
-        board_id = 4
-    if (eeg_name == 'GanglionWIFI'):
-        board_id = 5
-    if (eeg_name == 'CytonDaisyWIFI'):
-        board_id = 6
-    # NeuroMD Devices
-    if (eeg_name == 'BrainBit'):
-        board_id = 7
-    if (eeg_name == 'CallibriEEG'):
-        board_id = 9
-    if (eeg_name == 'BrainBitBLED'):
-        board_id = 18
-    # G.TEC Devices
-    if (eeg_name == 'Unicorn'):
-        board_id = 8
-    # Neurosity Devices
-    if (eeg_name == 'Notion1'):
-        board_id = 13
-    if (eeg_name == 'Notion2'):
-        board_id = 14
-    if (eeg_name == 'Crown'):
-        board_id = 23
-    # OYMotion
-    if (eeg_name == 'GforcePro'):
-        board_id = 16
-    if (eeg_name == 'GforceDual'):
-        board_id = 19
-    # FreeEEG32
-    if (eeg_name == 'FreeEEG32'):
-        board_id = 17
-    # Muse
-    if (eeg_name == 'MuseSBLED'):
-        board_id = 21
-    if (eeg_name == 'Muse2BLED'):
-        board_id = 22
-    if (eeg_name == 'Muse2'):
-        board_id = 38
-    if (eeg_name == 'MuseS'):
-        board_id = 39
-    # Ant Neuro
-    if (eeg_name == 'AntNeuroBoardEE410'):
-        board_id = 24
-    if (eeg_name == 'AntNeuroBoardEE411'):
-        board_id = 25
-    if (eeg_name == 'AntNeuroBoardEE430'):
-        board_id = 26
-    if (eeg_name == 'AntNeuroBoardEE211'):
-        board_id = 27
-    if (eeg_name == 'AntNeuroBoardEE212'):
-        board_id = 28
-    if (eeg_name == 'AntNeuroBoardEE213'):
-        board_id = 29
-    if (eeg_name == 'AntNeuroBoardEE214'):
-        board_id = 30
-    if (eeg_name == 'AntNeuroBoardEE215'):
-        board_id = 31
-    if (eeg_name == 'AntNeuroBoardEE221'):
-        board_id = 32
-    if (eeg_name == 'AntNeuroBoardEE222'):
-        board_id = 33
-    if (eeg_name == 'AntNeuroBoardEE223'):
-        board_id = 34
-    if (eeg_name == 'AntNeuroBoardEE224'):
-        board_id = 35
-    if (eeg_name == 'AntNeuroBoardEE225'):
-        board_id = 36
-    # Enophone
-    if (eeg_name == 'Enophone'):
-        board_id = 37
 
     # 2. Build the parser object with the correct data based off of the headset
     parser = argparse.ArgumentParser()
@@ -203,22 +131,113 @@ def get_eeg_params(eeg_name, mac_address):
                         required=False, default=file)
     parser.add_argument('--streamer-params', type=str,
                         help='streamer params', required=False, default=streamer_params)
+    parser.add_argument('--eeg-name', type=str,
+                        help='user', required=False, default='')
+    parser.add_argument('--user', type=str,
+                        help='user', required=False, default='')
+    parser.add_argument('--song', type=str,
+                        help='song', required=False, default='')
 
+    print_debug("Got EEG params")
     return parser.parse_args()
 
 
-def getSerialPortBasedOffOfOS():
-    serial_port = 'COM3'
-    os_name = platform.system()
-    if (os_name == 'MacOS'):
-        serial_port = '/dev/cu.usbserial-'
-    if (os_name == 'Linux'):
-        serial_port = "/dev/ttyUSB0"
-    return serial_port
+# def getSerialPortBasedOffOfOS(os_name):
+#     print('Getting serial port based off of OS, current OS: ' + os_name)
+#     serial_port = 'COM3'
+#     if (os_name == 'MacOS'):
+#         serial_port = '/dev/cu.usbserial-'
+#     if (os_name == 'Linux'):
+#         serial_port = "/dev/ttyUSB0"
+#     return serial_port
 
+def get_eeg_board_id(eeg_name): 
+    board_id = 1
+
+    if (eeg_name == 'synthetic'):
+        board_id = -1
+    if (eeg_name == 'cyton'):
+        board_id = 0
+    if (eeg_name == 'ganglion'):
+        board_id = 1
+    if (eeg_name == 'cytondaisy'):
+        board_id = 2
+    if (eeg_name == 'cytonwifi'):
+        board_id = 4
+    if (eeg_name == 'ganglionwifi'):
+        board_id = 5
+    if (eeg_name == 'cytondaisywifi'):
+        board_id = 6
+    # neuromd devices
+    if (eeg_name == 'brainbit'):
+        board_id = 7
+    if (eeg_name == 'callibrieeg'):
+        board_id = 9
+    if (eeg_name == 'brainbitbled'):
+        board_id = 18
+    # g.tec devices
+    if (eeg_name == 'unicorn'):
+        board_id = 8
+    # neurosity devices
+    if (eeg_name == 'notion1'):
+        board_id = 13
+    if (eeg_name == 'notion2'):
+        board_id = 14
+    if (eeg_name == 'crown'):
+        board_id = 23
+    # oymotion
+    if (eeg_name == 'gforcepro'):
+        board_id = 16
+    if (eeg_name == 'gforcedual'):
+        board_id = 19
+    # freeeeg32
+    if (eeg_name == 'freeeeg32'):
+        board_id = 17
+    # muse
+    if (eeg_name == 'musesbled'):
+        board_id = 21
+    if (eeg_name == 'muse2bled'):
+        board_id = 22
+    if (eeg_name == 'muse2'):
+        board_id = 38
+    if (eeg_name == 'muses'):
+        board_id = 39
+    # ant neuro
+    if (eeg_name == 'antneuroboardee410'):
+        board_id = 24
+    if (eeg_name == 'antneuroboardee411'):
+        board_id = 25
+    if (eeg_name == 'antneuroboardee430'):
+        board_id = 26
+    if (eeg_name == 'antneuroboardee211'):
+        board_id = 27
+    if (eeg_name == 'antneuroboardee212'):
+        board_id = 28
+    if (eeg_name == 'antneuroboardee213'):
+        board_id = 29
+    if (eeg_name == 'antneuroboardee214'):
+        board_id = 30
+    if (eeg_name == 'antneuroboardee215'):
+        board_id = 31
+    if (eeg_name == 'antneuroboardee221'):
+        board_id = 32
+    if (eeg_name == 'antneuroboardee222'):
+        board_id = 33
+    if (eeg_name == 'antneuroboardee223'):
+        board_id = 34
+    if (eeg_name == 'antneuroboardee224'):
+        board_id = 35
+    if (eeg_name == 'antneuroboardee225'):
+        board_id = 36
+    # enophone
+    if (eeg_name == 'enophone'):
+        board_id = 37
+
+    print_debug("Got EEG board ID for eeg named: " + str(eeg_name) + ", board id: " + str(board_id))
+    return board_id
 
 def create_eeg_board_object(eeg_params):
-    print_debug("Creating EEG Board Object with default data")
+    print("Creating EEG Board Object with default data")
 
     # 1. Enable brainflow loggers
     enable_brainflow_loggers()
@@ -231,6 +250,7 @@ def create_eeg_board_object(eeg_params):
 
 
 def enable_brainflow_loggers():
+    print('Enabling brainflow loggers')
     BoardShim.enable_board_logger()
     DataFilter.enable_data_logger()
     MLModel.enable_ml_logger()
@@ -238,6 +258,7 @@ def enable_brainflow_loggers():
 
 def set_brainflow_input_params(eeg_params):
     """Gets BrainFlowInputParams object based off of the EEG's custom parameters"""
+    print("Setting up brainflow input params")
     bf_params = BrainFlowInputParams()
     bf_params.ip_port = eeg_params.ip_port
     bf_params.serial_port = eeg_params.serial_port
@@ -251,16 +272,18 @@ def set_brainflow_input_params(eeg_params):
     return bf_params
 
 
-def stream_eeg_data(board, eeg_params):
+def stream_eeg_data(board, eeg_params, writer):
     board_id = board.get_board_id()
     sampling_rate = BoardShim.get_sampling_rate(board_id)
     eeg_channels_count = BoardShim.get_eeg_channels(int(board_id))
+    print("About to stream data from board ID: " + str(board_id) +
+          " sampling rate " + str(sampling_rate) + " eeg_channels_count: " + str(eeg_channels_count))
     prepare_eeg_stream(board, eeg_params)
-    parse_eeg_stream(board, sampling_rate, eeg_channels_count)
+    parse_eeg_stream(board, sampling_rate, eeg_channels_count, writer)
 
 
 def prepare_eeg_stream(board, eeg_params):
-    print_debug('Preparing to stream EEG data')
+    print('Preparing board to stream EEG data')
     board.prepare_session()
     board.start_stream(45000, eeg_params.streamer_params)
     BoardShim.log_message(LogLevels.LEVEL_INFO.value,
@@ -269,7 +292,11 @@ def prepare_eeg_stream(board, eeg_params):
     time.sleep(2.7)
 
 
-def parse_eeg_stream(board, sampling_rate, eeg_channels_count):
+def parse_eeg_stream(board, sampling_rate, eeg_channels_count, writer):
+    print('Parsing EEG stream data')
+    start_time = time.time()
+    seconds = 4
+
     while(True):
         time.sleep(1.3)  # Pause between each EEG Snapshot
         data = board.get_board_data()  # Read what was currently collected on by the board
@@ -278,17 +305,38 @@ def parse_eeg_stream(board, sampling_rate, eeg_channels_count):
         avg_bandpower = get_average_brainwave_bandpower_json(
             data, sampling_rate, eeg_channels_count)
 
-        # For most of the music generation approaches we will need a more specific view
-        eeg_channels_of_interest = [0, 1, 2, 3]
-        specific_channel_bandpower = get_specific_channels_brainwave_bandpower_json(
-            data, sampling_rate, eeg_channels_of_interest)
+        current_time = datetime.datetime.now()
+        cur_time = current_time.hour + current_time.minute + \
+            current_time.second + current_time.microsecond
 
-        merged_output = {**avg_bandpower, **specific_channel_bandpower}
-        # writer.writerow(row)
+        row = []
+        row.append(cur_time)
+        for brainwave in BRAINWAVES:
+            row.append(avg_bandpower[brainwave])
 
-        print(str(json.dumps(merged_output)))
-        # Required to flush output for python to allow for python to output script before it has fully executed (which won't happen with the while true)!
-        sys.stdout.flush()
+        writer.writerow(row)
+
+        current_time = time.time()
+        elapsed_time = current_time - start_time
+
+        if elapsed_time > seconds:
+            print("Finished iterating in: " +
+                  str(int(elapsed_time)) + " seconds")
+            break
+
+        # # For most of the music generation approaches we will need a more specific view
+        # eeg_channels_of_interest = [0, 1, 2, 3]
+        # specific_channel_bandpower = get_specific_channels_brainwave_bandpower_json(
+        #     data, sampling_rate, eeg_channels_of_interest)
+
+        # merged_output = {**avg_bandpower, **specific_channel_bandpower}
+        # print(str(json.dumps(merged_output)))
+
+        # print(str(json.dumps(merged_output)))
+        # # Required to flush output for python to allow for python to output script before it has fully executed (which won't happen with the while true)!
+        # sys.stdout.flush()
+    # df = pd.read_json(avg_bandpower)
+    # df.to_csv()
 
 
 def get_average_brainwave_bandpower_json(data, sampling_rate, eeg_channels):
@@ -297,7 +345,8 @@ def get_average_brainwave_bandpower_json(data, sampling_rate, eeg_channels):
         data, sampling_rate, eeg_channels)
     avg_brainwave_bandpower = get_average_brainwave_bandpower(
         eeg_channels, channel_bandpowers)
-    return {"average_bandpower": avg_brainwave_bandpower}
+    return avg_brainwave_bandpower
+    # return {"average_bandpower": avg_brainwave_bandpower}
 
 
 def get_specific_channels_brainwave_bandpower_json(data, sampling_rate, eeg_channels):
@@ -389,7 +438,7 @@ def calculate_feature_vector(data, eeg_channels_count, sampling_rate):
 
 def print_debug(string):
     debug = 1
-    # print(string)
+    print(string)
     # sys.stderr.write(string)
 
 
