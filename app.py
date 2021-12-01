@@ -12,13 +12,12 @@ model = keras.models.load_model("lstm_model_4.h5")
 scale_index = 5
 n_features = 8
 
-def scale_prediction(model_prediction, scaler):
+def scale_prediction(model_prediction, scale_size):
   # Adjust predicted data to scale
-  num_notes_scale_index = scale_index
   adjusted_prediction = np.zeros(len(model_prediction))
   previous = 1
   for i in range(len(adjusted_prediction)):
-    adjusted_prediction[i] =  (num_notes_scale_index * model_prediction[i] * previous) % num_notes_scale_index
+    adjusted_prediction[i] =  (scale_size * model_prediction[i] * previous) % scale_size
     previous = adjusted_prediction[i]
     
   return adjusted_prediction
@@ -56,7 +55,7 @@ def predict():
     # 4. Predict!
     predictions = model.predict(array)
     # predictions = scale_prediction(predictions, numNotesInScaleCol)
-    scaled_predictions = scale_prediction(predictions.tolist(), scaler)
+    scaled_predictions = scale_prediction(predictions.tolist(), first_eeg_snapshot[scale_index])
     output_data = {"output": scaled_predictions}
 
     print(output_data)
