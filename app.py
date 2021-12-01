@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow import keras
 import json
 import os
+from sklearn.preprocessing import MinMaxScaler
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 app = Flask(__name__)
@@ -56,6 +57,9 @@ def predict():
         # numNotesInScaleCol.push(array[i][numNotesInScaleColIndex])
         # np.vstack([array, cur_eeg_snapshot_data])
 
+    scaler = MinMaxScaler(feature_range=(0, 1)) 
+    array = scaler.fit_transform(array) 
+    
     # 4. Predict!
     predictions = model.predict(array)
     # predictions = scale_prediction(predictions, numNotesInScaleCol)
