@@ -17,7 +17,7 @@ def scale_prediction(model_prediction, scale_size):
   adjusted_prediction = np.zeros(len(model_prediction))
   previous = 1
   for i in range(len(adjusted_prediction)):
-    adjusted_prediction[i] =  (scale_size * model_prediction[i] * previous) % scale_size
+    adjusted_prediction[i] =  round((scale_size * model_prediction[i] * previous) % scale_size)
     previous = adjusted_prediction[i]
     
   return adjusted_prediction
@@ -36,9 +36,10 @@ def predict():
     first_eeg_snapshot = np.fromstring(
         input_data_numpy_array[0], dtype=float, sep=',')
     print(f"first_eeg_snapshot {first_eeg_snapshot}")
+    
+    scale_size = int(first_eeg_snapshot[scale_index])
 
     total_features = len(first_eeg_snapshot)
-    # numNotesInScaleColIndex = total_features - 2
 
     # 3. Create the array, build it up with the data!
     array = np.empty([total_eeg_snapshots, total_features])
@@ -55,7 +56,7 @@ def predict():
     # 4. Predict!
     predictions = model.predict(array)
     # predictions = scale_prediction(predictions, numNotesInScaleCol)
-    scaled_predictions = scale_prediction(predictions.tolist(), first_eeg_snapshot[scale_index])
+    scaled_predictions = scale_prediction(predictions.tolist(), scale_size)
     output_data = {"output": scaled_predictions}
 
     print(output_data)
