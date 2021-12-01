@@ -10,6 +10,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 app = Flask(__name__)
 model = keras.models.load_model("lstm_model_4.h5")
 scale_index = 5
+n_features = 8
 
 def scale_prediction(model_prediction, scaler):
   # Adjust predicted data to scale
