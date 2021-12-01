@@ -5,3 +5,4 @@ tensorflow
 tensorflowjs
 numpy
 pandas
+sklearn
