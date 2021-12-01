@@ -9,20 +9,26 @@ from sklearn.preprocessing import MinMaxScaler
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 app = Flask(__name__)
 model = keras.models.load_model("lstm_model_4.h5")
-scale_index = 5
-n_features = 8
 
-def scale_prediction(model_prediction, scale_size):
-  # Adjust predicted data to scale
-  adjusted_prediction = np.zeros(len(model_prediction))
-  previous = 1
-  for i in range(len(adjusted_prediction)):
-    print(scale_size)
-    print(model_prediction[i][0])
-    adjusted_prediction[i] =  round(scale_size * (model_prediction[i][0] + 1) * previous) % scale_size
-    previous = adjusted_prediction[i]
-    
-  return adjusted_prediction.tolist()
+# def scale_prediction(model_prediction, numNotesInScaleColIndex):
+#   # Inverse transfer predicted data
+#   num_notes_scale_index = train_data.columns.get_loc('NumNotesInScale')
+#   inverse_scaler_dataset = np.zeros(shape=(len(model_prediction), n_features))
+#   inverse_scaler_dataset[:,num_notes_scale_index] = model_prediction[:,0]
+#   scaled_prediction = scaler.inverse_transform(inverse_scaler_dataset)[:,0]
+
+#   # Adjust predicted data to test's scale
+#   test_data_scale_col = test_data[test_data.columns[-2]]
+#   adjusted_prediction = np.zeros(len(scaled_prediction))
+#   for i in range(len(test_data_scale_col)):
+#     scale_size = test_data_scale_col[i]
+#     scaled_adjustment = scaled_prediction[i] * 100
+#     adjusted_prediction[i] =  int(proper_round(scale_size * scaled_adjustment, 0))
+
+#   filename = "prediction_" + name + ".csv"
+#   pd.DataFrame(adjusted_prediction).to_csv(filename, index = None)
+
+#   return adjusted_prediction
 
 
 @app.post('/predict')
@@ -38,10 +44,9 @@ def predict():
     first_eeg_snapshot = np.fromstring(
         input_data_numpy_array[0], dtype=float, sep=',')
     print(f"first_eeg_snapshot {first_eeg_snapshot}")
-    
-    scale_size = int(first_eeg_snapshot[scale_index])
 
     total_features = len(first_eeg_snapshot)
+    # numNotesInScaleColIndex = total_features - 2
 
     # 3. Create the array, build it up with the data!
     array = np.empty([total_eeg_snapshots, total_features])
@@ -58,8 +63,7 @@ def predict():
     # 4. Predict!
     predictions = model.predict(array)
     # predictions = scale_prediction(predictions, numNotesInScaleCol)
-    scaled_predictions = scale_prediction(predictions.tolist(), scale_size)
-    output_data = {"output": scaled_predictions}
+    output_data = {"output": predictions.tolist()}
 
     print(output_data)
     return output_data
