@@ -9,26 +9,22 @@ from sklearn.preprocessing import MinMaxScaler
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 app = Flask(__name__)
 model = keras.models.load_model("lstm_model_4.h5")
+scale_index = 5
 
-# def scale_prediction(model_prediction, numNotesInScaleColIndex):
-#   # Inverse transfer predicted data
-#   num_notes_scale_index = train_data.columns.get_loc('NumNotesInScale')
-#   inverse_scaler_dataset = np.zeros(shape=(len(model_prediction), n_features))
-#   inverse_scaler_dataset[:,num_notes_scale_index] = model_prediction[:,0]
-#   scaled_prediction = scaler.inverse_transform(inverse_scaler_dataset)[:,0]
+def scale_prediction(model_prediction, scaler):
+  # Adjust predicted data to scale
+  num_notes_scale_index = scale_index
+  inverse_scaler_dataset = np.zeros(shape=(len(model_prediction), n_features))
+  inverse_scaler_dataset[:,num_notes_scale_index] = model_prediction[:,0]
+  scaled_prediction = scaler.inverse_transform(inverse_scaler_dataset)[:,0]
 
-#   # Adjust predicted data to test's scale
-#   test_data_scale_col = test_data[test_data.columns[-2]]
-#   adjusted_prediction = np.zeros(len(scaled_prediction))
-#   for i in range(len(test_data_scale_col)):
-#     scale_size = test_data_scale_col[i]
-#     scaled_adjustment = scaled_prediction[i] * 100
-#     adjusted_prediction[i] =  int(proper_round(scale_size * scaled_adjustment, 0))
+  adjusted_prediction = np.zeros(len(scaled_prediction))
+  for i in range(len(test_data_scale_col)):
+    scale_size = test_data_scale_col[i]
+    scaled_adjustment = scaled_prediction[i] * 100
+    adjusted_prediction[i] =  (scale_size * scaled_adjustment) % scale_size
 
-#   filename = "prediction_" + name + ".csv"
-#   pd.DataFrame(adjusted_prediction).to_csv(filename, index = None)
-
-#   return adjusted_prediction
+  return adjusted_prediction
 
 
 @app.post('/predict')
@@ -63,7 +59,8 @@ def predict():
     # 4. Predict!
     predictions = model.predict(array)
     # predictions = scale_prediction(predictions, numNotesInScaleCol)
-    output_data = {"output": predictions.tolist()}
+    scaled_predictions = scale_prediction(predictions.tolist(), scaler)
+    output_data = {"output": scaled_predictions}
 
     print(output_data)
     return output_data
