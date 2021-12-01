@@ -22,7 +22,7 @@ def scale_prediction(model_prediction, scale_size):
     adjusted_prediction[i] =  round(scale_size * model_prediction[i][0] * previous) % scale_size
     previous = adjusted_prediction[i]
     
-  return adjusted_prediction
+  return adjusted_prediction.tolist()
 
 
 @app.post('/predict')
