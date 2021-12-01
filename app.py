@@ -15,7 +15,7 @@ n_features = 8
 def scale_prediction(model_prediction, scaler):
   # Adjust predicted data to scale
   num_notes_scale_index = scale_index
-  adjusted_prediction = np.zeros(len(scaled_prediction))
+  adjusted_prediction = np.zeros(len(model_prediction))
   previous = 1
   for i in range(len(test_data_scale_col)):
     adjusted_prediction[i] =  (num_notes_scale_index * model_prediction[i] * previous) % num_notes_scale_index
