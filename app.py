@@ -16,8 +16,8 @@ def scale_prediction(model_prediction, scaler):
   # Adjust predicted data to scale
   num_notes_scale_index = scale_index
   inverse_scaler_dataset = np.zeros(shape=(len(model_prediction), n_features))
-  inverse_scaler_dataset[:,num_notes_scale_index] = model_prediction[:,0]
-  scaled_prediction = scaler.inverse_transform(inverse_scaler_dataset)[:,0]
+  inverse_scaler_dataset[:num_notes_scale_index] = model_prediction[:0]
+  scaled_prediction = scaler.inverse_transform(inverse_scaler_dataset)[:0]
 
   adjusted_prediction = np.zeros(len(scaled_prediction))
   for i in range(len(test_data_scale_col)):
