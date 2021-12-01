@@ -17,6 +17,8 @@ def scale_prediction(model_prediction, scale_size):
   adjusted_prediction = np.zeros(len(model_prediction))
   previous = 1
   for i in range(len(adjusted_prediction)):
+    print(scale_size)
+    print(model_prediction[i])
     adjusted_prediction[i] =  round(scale_size * model_prediction[i] * previous) % scale_size
     previous = adjusted_prediction[i]
     
